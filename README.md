@@ -5,11 +5,10 @@ Aplicación React para **configurar auditorías** y **capturar hallazgos**, con 
 > **Stack:** React + Vite · Zustand (estado) · localStorage (persistencia temporal)
 
 ## Requisitos
-- Node 18+ y npm
+- Node y npm
 
 ## Cómo correr en local
 ```bash
 npm install
 npm run dev
-# abrir la URL que muestre la terminal (ej. http://localhost:5173/)
-
+# abrir la URL que muestre la terminal (http://localhost:5173/)
