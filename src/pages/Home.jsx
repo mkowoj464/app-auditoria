@@ -5,98 +5,101 @@ export default function Home(){
   const { audits, role, deleteAudit } = useAudits()
   
   const handleDelete = (id, nombre) => {
-    if(window.confirm(`¿Estás seguro de eliminar la auditoría "${nombre}"?`)) {
-       deleteAudit(id);
-    }
+    if(window.confirm(`¿Eliminar "${nombre}"?`)) deleteAudit(id);
   }
 
-  // Cálculos rápidos para el Dashboard
-  const total = audits.length
-  const pendientes = audits.filter(a => !a.fechaFin).length // Suponiendo que si no hay fecha fin, está activa
+  // Filtro de visualización: Auditor ve las suyas, Coordinador ve TODAS.
+  // (Para este prototipo, asumiremos que el nombre del auditor logueado es "Juan Pérez" o similar, 
+  // pero como no hay login real, el Coordinador ve todo el array y el Auditor también, diferenciamos solo los cards).
+  
+  // Lógica para el Gráfico Circular del Coordinador
+  const metaAuditorias = 100;
+  const realizadas = audits.length;
+  const porcentajeAvance = Math.min(Math.round((realizadas / metaAuditorias) * 100), 100);
+  
+  // Cálculo del círculo SVG
+  const radius = 35;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (porcentajeAvance / 100) * circumference;
 
   return (
     <div className="container">
-      
-      {/* HEADER DEL DASHBOARD */}
       <div style={{marginBottom: '2rem'}}>
-        <h1 style={{margin: 0}}>Hola, {role === 'AUDITOR' ? 'Auditor' : 'Coordinador'} 👋</h1>
-        <p className="text-muted">Bienvenido al panel de control de Auditoren.</p>
+        <h1 style={{margin: 0}}>Hola, {role} 👋</h1>
+        <p className="text-muted">Panel de control - {role === 'AUDITOR' ? 'Vista Operativa' : 'Vista Gerencial'}</p>
       </div>
 
-      {/* SECCIÓN 1: ACCESOS RÁPIDOS (TARJETAS GRANDES) */}
-      <div className="grid-2" style={{marginBottom: '3rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))'}}>
-        
-        {/* Tarjeta 1: Nueva Auditoría */}
-        <div className="card" style={{background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: 'white', marginBottom: 0}}>
-          <h2 style={{color: 'white', marginTop: 0}}>Iniciar Auditoría</h2>
-          <p style={{opacity: 0.8}}>Comenzar un nuevo ciclo de revisión.</p>
-          <Link to="/new">
-            <button style={{background: 'white', color: '#0f172a', marginTop: '1rem', width: '100%'}}>
-              + Crear Nueva
-            </button>
-          </Link>
+      {/* --- VISTA DE AUDITOR --- */}
+      {role === 'AUDITOR' && (
+        <div className="grid-2" style={{marginBottom: '3rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))'}}>
+            <div className="card" style={{background: '#0f172a', color: 'white', marginBottom: 0}}>
+            <h2 style={{color: 'white', marginTop: 0}}>Iniciar Auditoría</h2>
+            <Link to="/new"><button style={{background: 'white', color: '#0f172a', width: '100%', marginTop:'1rem'}}>+ Crear Nueva</button></Link>
+            </div>
+            <div className="card" style={{marginBottom: 0}}>
+            <h2 style={{marginTop: 0}}>📂 Plantillas</h2>
+            <Link to="/templates"><button className="secondary" style={{width: '100%'}}>Ver Catálogo</button></Link>
+            </div>
+            <div className="card" style={{marginBottom: 0, borderLeft: '4px solid #3b82f6'}}>
+            <h2 style={{marginTop: 0, color: '#3b82f6'}}>{realizadas}</h2>
+            <p style={{fontWeight: 'bold'}}>Mis Auditorías</p>
+            </div>
         </div>
+      )}
 
-        {/* Tarjeta 2: Plantillas */}
-        <div className="card" style={{marginBottom: 0}}>
-          <h2 style={{marginTop: 0}}>📂 Plantillas</h2>
-          <p className="text-muted">Gestionar estándares (ISO, LFPDPPP).</p>
-          <Link to="/templates">
-            <button className="secondary" style={{width: '100%'}}>Ver Catálogo</button>
-          </Link>
+      {/* --- VISTA DE COORDINADOR (H-007) --- */}
+      {(role === 'COORDINADOR' || role === 'ADMIN') && (
+        <div className="grid-2" style={{marginBottom: '3rem', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))'}}>
+            
+            {/* Card 1: Link a Indicadores */}
+            <div className="card" style={{marginBottom: 0, cursor:'pointer'}}>
+                <h2 style={{marginTop:0}}>📊 Indicadores</h2>
+                <p className="text-muted">KPIs y Desempeño</p>
+                <Link to="/indicators"><button style={{width:'100%'}}>Ver Dashboard BI</button></Link>
+            </div>
+
+            {/* Card 2: Crear Plantilla (Prototipo) */}
+            <div className="card" style={{marginBottom: 0, background:'#f8fafc', border:'1px dashed #ccc'}}>
+                <h2 style={{marginTop:0, color:'#64748b'}}>+ Crear Plantilla</h2>
+                <p className="text-muted">Configurar nuevos estándares</p>
+                <button className="secondary" disabled style={{width:'100%', opacity:0.6}}>Próximamente</button>
+            </div>
+
+            {/* Card 3: Avance Calendario (Gráfico Circular) */}
+            <div className="card" style={{marginBottom: 0, display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                <div>
+                    <h2 style={{marginTop:0, marginBottom:0}}>{porcentajeAvance}%</h2>
+                    <p className="text-muted" style={{fontSize:'0.8rem'}}>Avance Anual<br/>({realizadas}/{metaAuditorias})</p>
+                </div>
+                <div style={{width:'80px', height:'80px', position:'relative'}}>
+                    <svg width="80" height="80" style={{transform: 'rotate(-90deg)'}}>
+                        <circle cx="40" cy="40" r={radius} stroke="#e2e8f0" strokeWidth="8" fill="transparent" />
+                        <circle cx="40" cy="40" r={radius} stroke="#3b82f6" strokeWidth="8" fill="transparent" 
+                                strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} style={{transition: 'stroke-dashoffset 1s ease'}} />
+                    </svg>
+                </div>
+            </div>
         </div>
+      )}
 
-        {/* Tarjeta 3: Resumen (Visual) */}
-        <div className="card" style={{marginBottom: 0, borderLeft: '4px solid #3b82f6'}}>
-          <h2 style={{marginTop: 0, color: '#3b82f6'}}>{total}</h2>
-          <p style={{fontWeight: 'bold', margin: 0}}>Auditorías Registradas</p>
-          <p className="text-muted" style={{fontSize: '0.9rem'}}>Histórico total en el sistema.</p>
-        </div>
-      </div>
-
-      {/* SECCIÓN 2: LISTADO RECIENTE */}
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem'}}>
-        <h3 style={{margin: 0}}>📋 Auditorías Recientes</h3>
-        <span className="text-muted" style={{fontSize: '0.9rem'}}>Ordenado por fecha de creación</span>
-      </div>
-
-      {audits.length === 0 ? (
-        <div className="card" style={{textAlign:'center', padding:'3rem', borderStyle: 'dashed'}}>
-           <p className="text-muted">No hay registros. Comienza creando una auditoría arriba.</p>
-        </div>
-      ) : (
+      {/* LISTADO DE AUDITORIAS (Común para ambos, pero Coordinador puede borrar) */}
+      <h3>{role === 'COORDINADOR' ? '📋 Auditorías Recientes (Global)' : '📋 Mis Auditorías Recientes'}</h3>
+      
+      {audits.length === 0 ? <p className="text-muted">No hay registros.</p> : (
         <div style={{display:'grid', gap:'1rem'}}>
           {audits.map(a => (
-            <div key={a.id} className="card" style={{padding:'1.2rem', marginBottom:0, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-               <div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
-                  {/* Icono visual según tipo */}
-                  <div style={{background: '#eff6ff', color: '#3b82f6', width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold'}}>
-                    {a.sucursal.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <Link to={`/audit/${a.id}`} style={{fontSize:'1.1rem', color:'var(--primary)', fontWeight: 'bold', textDecoration: 'none'}}>
-                      {a.nombreAuditoria || `Auditoría ${a.sucursal}`}
-                    </Link>
-                    <div className="text-muted" style={{fontSize: '0.85rem', marginTop:'0.2rem'}}>
-                      {a.auditor} • {new Date(a.creadoEl).toLocaleDateString()}
-                    </div>
-                  </div>
-               </div>
-               
-               <div style={{display:'flex', gap:'10px'}}>
-                  <Link to={`/audit/${a.id}`}>
-                    <button className="secondary" style={{padding: '0.5rem 1rem'}}>Abrir</button>
+            <div key={a.id} className="card" style={{padding:'1rem', marginBottom:0, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+               <div>
+                  <Link to={`/audit/${a.id}`} style={{fontWeight:'bold', fontSize:'1.1rem', color: a.status === 'enviado' ? '#64748b' : 'var(--primary)', textDecoration:'none'}}>
+                    {a.nombreAuditoria || `Auditoría ${a.sucursal}`}
                   </Link>
-
-                  {/* Botón Borrar (H-009) */}
+                  {a.status === 'enviado' && <span style={{marginLeft:'10px', fontSize:'0.7rem', background:'#10b981', color:'white', padding:'2px 6px', borderRadius:'4px'}}>ENVIADO</span>}
+                  <div className="text-muted" style={{fontSize:'0.85rem'}}>{a.auditor} • {new Date(a.creadoEl).toLocaleDateString()}</div>
+               </div>
+               <div style={{display:'flex', gap:'10px'}}>
+                  <Link to={`/audit/${a.id}`}><button className="secondary">Abrir</button></Link>
                   {(role === 'COORDINADOR' || role === 'ADMIN') && (
-                    <button 
-                        onClick={() => handleDelete(a.id, a.sucursal)}
-                        style={{backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '0.5rem 1rem'}}
-                        title="Eliminar"
-                    >
-                        🗑️
-                    </button>
+                    <button onClick={() => handleDelete(a.id, a.sucursal)} style={{background:'#ef4444', border:'none'}}>🗑️</button>
                   )}
                </div>
             </div>

@@ -1,8 +1,10 @@
 import { Link, Route, Routes, useNavigate } from 'react-router-dom'
+// Importamos tus páginas
 import Home from './pages/Home.jsx'
 import NewAudit from './pages/NewAudit.jsx'
 import AuditDetail from './pages/AuditDetail.jsx'
 import Templates from './pages/Templates.jsx'
+import Indicators from './pages/Indicators.jsx' // <--- 1. AQUÍ IMPORTAMOS LA NUEVA PÁGINA
 import { useAudits } from './store/audits.js'
 
 export default function App() {
@@ -16,7 +18,9 @@ export default function App() {
           <h3 style={{margin:0, color:'#0f172a'}}>Auditoren</h3>
           <nav>
             <Link to="/">Tablero</Link>
-            <Link to="/new">Nueva Auditoría</Link>
+            {/* El Auditor ve "Nueva Auditoría", el Coordinador ve "Indicadores" en el menú */}
+            {role === 'AUDITOR' && <Link to="/new">Nueva Auditoría</Link>}
+            {role !== 'AUDITOR' && <Link to="/indicators">Indicadores</Link>}
             <Link to="/templates">Plantillas</Link>
           </nav>
         </div>
@@ -36,11 +40,13 @@ export default function App() {
       </header>
 
       <main>
+        {/* 2. AQUÍ ESTÁ EL COMPONENTE ROUTES DONDE AGREGAMOS LA RUTA */}
         <Routes>
           <Route path="/" element={<Home/>}/>
           <Route path="/new" element={<NewAudit/>}/>
           <Route path="/audit/:id" element={<AuditDetail/>}/>
           <Route path="/templates" element={<Templates/>}/>
+          <Route path="/indicators" element={<Indicators/>}/> {/* <--- ESTA ES LA LÍNEA NUEVA */}
         </Routes>
       </main>
     </>
