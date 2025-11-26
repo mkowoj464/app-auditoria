@@ -1,16 +1,26 @@
 import { Link, Route, Routes, useNavigate } from 'react-router-dom'
-// Importamos tus páginas
 import Home from './pages/Home.jsx'
 import NewAudit from './pages/NewAudit.jsx'
 import AuditDetail from './pages/AuditDetail.jsx'
 import Templates from './pages/Templates.jsx'
-import Indicators from './pages/Indicators.jsx' // <--- 1. AQUÍ IMPORTAMOS LA NUEVA PÁGINA
+import Indicators from './pages/Indicators.jsx'
+import AdminUsers from './pages/AdminUsers.jsx'
+import Login from './pages/Login.jsx' // <--- IMPORTANTE
 import { useAudits } from './store/audits.js'
 
 export default function App() {
-  const { role, setRole } = useAudits()
+  const { currentUser, logout } = useAudits()
   const nav = useNavigate()
-  
+
+  // --- GUARDIA DE SEGURIDAD ---
+  // Si no hay usuario logueado, mostramos SOLO la pantalla de Login
+  if (!currentUser) {
+    return <Login />;
+  }
+
+  // Si hay usuario, mostramos la App completa
+  const role = currentUser.rol; // Usamos el rol REAL del usuario
+
   return (
     <>
       <header>
@@ -18,35 +28,38 @@ export default function App() {
           <h3 style={{margin:0, color:'#0f172a'}}>Auditoren</h3>
           <nav>
             <Link to="/">Tablero</Link>
-            {/* El Auditor ve "Nueva Auditoría", el Coordinador ve "Indicadores" en el menú */}
+            {/* Lógica de Menú según el Rol REAL */}
             {role === 'AUDITOR' && <Link to="/new">Nueva Auditoría</Link>}
-            {role !== 'AUDITOR' && <Link to="/indicators">Indicadores</Link>}
+            {(role === 'COORDINADOR' || role === 'ADMIN') && <Link to="/indicators">Indicadores</Link>}
             <Link to="/templates">Plantillas</Link>
+            {role === 'ADMIN' && <Link to="/admin" style={{color:'#ef4444'}}>👥 Usuarios</Link>}
           </nav>
         </div>
         
-        <div style={{display:'flex', gap:'10px', alignItems:'center'}}>
-          <span style={{fontSize: '0.8rem', color: '#64748b'}}>Simular Rol:</span>
-          <select 
-            value={role} 
-            onChange={e=>setRole(e.target.value)}
-            style={{margin:0, padding:'0.4rem', width:'auto', fontSize:'0.9rem', cursor:'pointer'}}
+        <div style={{display:'flex', gap:'15px', alignItems:'center'}}>
+          <div style={{textAlign: 'right', lineHeight: '1.2'}}>
+            <div style={{fontWeight: 'bold', fontSize: '0.9rem'}}>{currentUser.nombre}</div>
+            <div style={{fontSize: '0.75rem', color: '#64748b', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', display: 'inline-block'}}>
+              {currentUser.rol}
+            </div>
+          </div>
+          <button 
+            onClick={() => { logout(); nav('/'); }} 
+            style={{padding: '5px 10px', fontSize: '0.8rem', background: 'transparent', border: '1px solid #cbd5e1', color: '#64748b'}}
           >
-            <option value="AUDITOR">Auditor</option>
-            <option value="COORDINADOR">Coordinador</option>
-            <option value="ADMIN">Administrador</option>
-          </select>
+            Salir
+          </button>
         </div>
       </header>
 
       <main>
-        {/* 2. AQUÍ ESTÁ EL COMPONENTE ROUTES DONDE AGREGAMOS LA RUTA */}
         <Routes>
           <Route path="/" element={<Home/>}/>
           <Route path="/new" element={<NewAudit/>}/>
           <Route path="/audit/:id" element={<AuditDetail/>}/>
           <Route path="/templates" element={<Templates/>}/>
-          <Route path="/indicators" element={<Indicators/>}/> {/* <--- ESTA ES LA LÍNEA NUEVA */}
+          <Route path="/indicators" element={<Indicators/>}/>
+          <Route path="/admin" element={<AdminUsers/>}/>
         </Routes>
       </main>
     </>
